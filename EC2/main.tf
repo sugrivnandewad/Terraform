@@ -1,12 +1,25 @@
 provider "aws" {
-  region = "ap-south-1"
+  region = var.aws_region
 }
 
-module "network" {
-    source = "../aws_network"
-  
+terraform {
+  backend "s3" {
+    bucket = "terraform-sbn"
+    key    = "dev/ec2/terraform.tfstate"
+    region = "ap-south-1" # Hardcoded region
 }
 
+}
+
+data "terraform_remote_state" "network" {
+  backend = "s3"
+  config = {
+    bucket = "terraform-sbn"
+    key    = "dev/network/terraform.tfstate"
+    region = "ap-south-1" # Hardcoded region
+  }
+
+}
 data "aws_ami" "latest_amazon_linux" {
   most_recent = true
   owners      = ["amazon"]
@@ -22,7 +35,7 @@ resource "aws_instance" "dev_instance" {
   ami           = data.aws_ami.latest_amazon_linux.id
   instance_type = "t2.micro"
   key_name      = aws_key_pair.my_key_pair.key_name
-  subnet_id = module.network.public_subnet_ids[0]
+  subnet_id     = data.terraform_remote_state.network.outputs.public_subnet_ids[0] # Use the first public subnet ID
   tags = {
     Name = "DevInstance"
     Owner = "DevTeam"
