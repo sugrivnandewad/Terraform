@@ -1,48 +1,11 @@
 provider "aws" {
-  region = var.aws_region
+  region = "ap-south-1"
 }
-
-terraform {
-  backend "s3" {
-    bucket = "terraform-sbn"
-    key    = "dev/ec2/terraform.tfstate"
-    region = "ap-south-1" # Hardcoded region
-}
-
-}
-
-data "terraform_remote_state" "network" {
-  backend = "s3"
-  config = {
-    bucket = "terraform-sbn"
-    key    = "dev/network/terraform.tfstate"
-    region = "ap-south-1" # Hardcoded region
-  }
-
-}
-data "aws_ami" "latest_amazon_linux" {
-  most_recent = true
-  owners      = ["amazon"]
-
-  filter {
-    name   = "name"
-    values = ["amzn2-ami-hvm-*-x86_64-gp2"]
-  }
-}
-
 
 resource "aws_instance" "dev_instance" {
-  ami           = data.aws_ami.latest_amazon_linux.id
+  ami           = "ami-0c55b159cbfafe1f0" # Example AMI, replace with a valid one
   instance_type = "t2.micro"
   key_name      = aws_key_pair.my_key_pair.key_name
-  subnet_id     = data.terraform_remote_state.network.outputs.public_subnet_ids[0]
-  tags = {
-    Name = "DevInstance"
-    Owner = "DevTeam"
-    Environment = "Development"
-    Project = "TerraformDemo"
-    Role = "WebServer"
-  }
 }
 
 resource "tls_private_key" "private_key" {
