@@ -53,7 +53,7 @@ resource "aws_instance" "dev_private_instance" {
   key_name                    = aws_key_pair.my_key_pair.key_name
   subnet_id                   = data.terraform_remote_state.network.outputs.private_subnet_ids[0] # Use the first private subnet ID
   iam_instance_profile        = "SSM"                                                             # Ensure this profile exists in your AWS account
-  associate_public_ip_address = true
+  associate_public_ip_address = false
   tags = {
     Name        = "DevInstance"
     Owner       = "DevTeam"
