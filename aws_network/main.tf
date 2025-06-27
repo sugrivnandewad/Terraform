@@ -3,6 +3,15 @@ provider "aws" {
 
 }
 
+terraform {
+  backend "s3" {
+    bucket = "terraform-sbn"
+    key    = dev / network / terraform.tfstate
+    region = var.aws_region
+
+  }
+}
+
 resource "aws_vpc" "dev_vpc" {
   cidr_block = var.vpc_cidr_block
   tags       = var.tags
@@ -126,7 +135,7 @@ resource "aws_route" "dev_private_route" {
   route_table_id         = aws_route_table.dev_private_rt[each.key].id
   destination_cidr_block = var.destination_cidr_block
   // Use the NAT Gateway ID from the corresponding public subnet
-  nat_gateway_id         = aws_nat_gateway.dev_ngw[each.key].id
+  nat_gateway_id = aws_nat_gateway.dev_ngw[each.key].id
 }
 
 resource "aws_route_table_association" "dev_private_assoc" {
