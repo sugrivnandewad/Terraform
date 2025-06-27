@@ -32,11 +32,11 @@ data "aws_ami" "latest_amazon_linux" {
 
 
 resource "aws_instance" "dev_instance" {
-  ami                  = data.aws_ami.latest_amazon_linux.id
-  instance_type        = "t2.micro"
-  key_name             = aws_key_pair.my_key_pair.key_name
-  subnet_id            = data.terraform_remote_state.network.outputs.public_subnet_ids[0] # Use the first public subnet ID
-  iam_instance_profile = "SSM"                                                            # Ensure this profile exists in your AWS account
+  ami                         = data.aws_ami.latest_amazon_linux.id
+  instance_type               = "t2.micro"
+  key_name                    = aws_key_pair.my_key_pair.key_name
+  subnet_id                   = data.terraform_remote_state.network.outputs.public_subnet_ids[0] # Use the first public subnet ID
+  iam_instance_profile        = "SSM"                                                            # Ensure this profile exists in your AWS account
   associate_public_ip_address = true
   tags = {
     Name        = "DevInstance"
@@ -48,11 +48,11 @@ resource "aws_instance" "dev_instance" {
 }
 
 resource "aws_instance" "dev_private_instance" {
-  ami                  = data.aws_ami.latest_amazon_linux.id
-  instance_type        = "t2.micro"
-  key_name             = aws_key_pair.my_key_pair.key_name
-  subnet_id            = data.terraform_remote_state.network.outputs.private_subnet_ids[0] # Use the first public subnet ID
-  iam_instance_profile = "SSM"                                                            # Ensure this profile exists in your AWS account
+  ami                         = data.aws_ami.latest_amazon_linux.id
+  instance_type               = "t2.small"
+  key_name                    = aws_key_pair.my_key_pair.key_name
+  subnet_id                   = data.terraform_remote_state.network.outputs.private_subnet_ids[0] # Use the first private subnet ID
+  iam_instance_profile        = "SSM"                                                             # Ensure this profile exists in your AWS account
   associate_public_ip_address = true
   tags = {
     Name        = "DevInstance"
