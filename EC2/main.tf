@@ -37,6 +37,7 @@ resource "aws_instance" "dev_instance" {
   key_name             = aws_key_pair.my_key_pair.key_name
   subnet_id            = data.terraform_remote_state.network.outputs.public_subnet_ids[0] # Use the first public subnet ID
   iam_instance_profile = "SSM"                                                            # Ensure this profile exists in your AWS account
+  associate_public_ip_address = true
   tags = {
     Name        = "DevInstance"
     Owner       = "DevTeam"
@@ -45,6 +46,23 @@ resource "aws_instance" "dev_instance" {
     Role        = "WebServer"
   }
 }
+
+resource "aws_instance" "dev_private_instance" {
+  ami                  = data.aws_ami.latest_amazon_linux.id
+  instance_type        = "t2.micro"
+  key_name             = aws_key_pair.my_key_pair.key_name
+  subnet_id            = data.terraform_remote_state.network.outputs.private_subnet_ids[0] # Use the first public subnet ID
+  iam_instance_profile = "SSM"                                                            # Ensure this profile exists in your AWS account
+  associate_public_ip_address = true
+  tags = {
+    Name        = "DevInstance"
+    Owner       = "DevTeam"
+    Environment = "Development"
+    Project     = "TerraformDemo"
+    Role        = "WebServer"
+  }
+}
+
 
 resource "tls_private_key" "private_key" {
   algorithm = "RSA"
