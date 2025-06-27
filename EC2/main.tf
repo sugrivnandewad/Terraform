@@ -35,7 +35,7 @@ resource "aws_instance" "dev_instance" {
   ami           = data.aws_ami.latest_amazon_linux.id
   instance_type = "t2.micro"
   key_name      = aws_key_pair.my_key_pair.key_name
-  subnet_id     = data.terraform_remote_state.network.outputs.public_subnet_ids[0] # Use the first public subnet ID
+  subnet_id     = data.terraform_remote_state.network.outputs.public_subnet_ids[0]
   tags = {
     Name = "DevInstance"
     Owner = "DevTeam"
