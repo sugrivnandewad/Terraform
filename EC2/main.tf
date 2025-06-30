@@ -124,25 +124,6 @@ resource "aws_security_group" "dev_instance_sg" {
   }
 }
 
-# Find a certificate that is issued
-data "aws_acm_certificate" "issued" {
-  domain   = "tf.example.com"
-  statuses = ["ISSUED"]
-}
-
-# Find a certificate issued by (not imported into) ACM
-data "aws_acm_certificate" "amazon_issued" {
-  domain      = "tf.example.com"
-  types       = ["AMAZON_ISSUED"]
-  most_recent = true
-}
-
-# Find a RSA 4096 bit certificate
-data "aws_acm_certificate" "rsa_4096" {
-  domain    = "tf.example.com"
-  key_types = ["RSA_4096"]
-}
-
 resource "aws_lb" "dev_public_lb" {
   name               = "dev-public-lb"
   internal           = false
