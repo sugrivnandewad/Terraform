@@ -30,6 +30,9 @@ data "aws_ami" "latest_amazon_linux" {
   }
 }
 
+locals {
+  user_data_hash = filebase64sha256("${path.module}/user_data.sh")
+}
 
 resource "aws_instance" "dev_instance" {
   ami                         = data.aws_ami.latest_amazon_linux.id
@@ -57,13 +60,16 @@ resource "aws_instance" "dev_private_instance" {
   associate_public_ip_address = false
   vpc_security_group_ids      = [aws_security_group.dev_instance_sg.id]
   user_data                   = file("${path.module}/user_data.sh")
-  user_data_replace_on_change = true
   tags = {
     Name        = "DevPrivateInstance"
     Owner       = "DevTeam"
     Environment = "Development"
     Project     = "TerraformDemo"
     Role        = "WebServer"
+  }
+
+  lifecycle {
+    replace_triggered_by = [local.user_data_hash]
   }
 }
 
