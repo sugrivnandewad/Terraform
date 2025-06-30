@@ -53,10 +53,10 @@ resource "aws_instance" "dev_private_instance" {
   instance_type               = "t2.small"
   key_name                    = aws_key_pair.my_key_pair.key_name
   subnet_id                   = data.terraform_remote_state.network.outputs.private_subnet_ids[0] # Use the first private subnet ID
-  iam_instance_profile        = "SSM" # Ensure this profile exists in your AWS account
+  iam_instance_profile        = "SSM"                                                             # Ensure this profile exists in your AWS account
   associate_public_ip_address = false
   vpc_security_group_ids      = [aws_security_group.dev_instance_sg.id]
-  user_data = <<-EOF
+  user_data                   = <<-EOF
               #!/bin/bash
               yum update -y
               yum install -y httpd
@@ -120,6 +120,61 @@ resource "aws_security_group" "dev_instance_sg" {
     from_port   = 0
     to_port     = 0
     protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = [var.aws_security_IP] # Corrected CIDR block
+  }
+}
+
+# Find a certificate that is issued
+data "aws_acm_certificate" "issued" {
+  domain   = "tf.example.com"
+  statuses = ["ISSUED"]
+}
+
+# Find a certificate issued by (not imported into) ACM
+data "aws_acm_certificate" "amazon_issued" {
+  domain      = "tf.example.com"
+  types       = ["AMAZON_ISSUED"]
+  most_recent = true
+}
+
+# Find a RSA 4096 bit certificate
+data "aws_acm_certificate" "rsa_4096" {
+  domain    = "tf.example.com"
+  key_types = ["RSA_4096"]
+}
+
+resource "aws_lb" "dev_public_lb" {
+  name               = "dev-public-lb"
+  internal           = false
+  load_balancer_type = "application"
+  security_groups    = [aws_security_group.dev_instance_sg.id]
+  subnets            = data.terraform_remote_state.network.outputs.public_subnet_ids
+}
+resource "aws_lb_target_group" "dev_target_group" {
+  name        = "dev-target-group"
+  port        = 80
+  protocol    = "HTTP"
+  vpc_id      = data.terraform_remote_state.network.outputs.vpc_id
+  target_type = "instance"
+  target_id   = aws_instance.dev_private_instance.id
+
+  health_check {
+    path                = "/"
+    interval            = 30
+    timeout             = 5
+    healthy_threshold   = 2
+    unhealthy_threshold = 2
+  }
+
+}
+
+resource "aws_lb_listener" "dev_http_listener" {
+  load_balancer_arn = aws_lb.dev_public_lb.arn
+  port              = 80
+  protocol          = "HTTP"
+
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.dev_target_group.arn
   }
 }
