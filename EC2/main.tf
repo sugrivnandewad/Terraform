@@ -38,6 +38,7 @@ resource "aws_instance" "dev_instance" {
   subnet_id                   = data.terraform_remote_state.network.outputs.public_subnet_ids[0] # Use the first public subnet ID
   iam_instance_profile        = "SSM"                                                            # Ensure this profile exists in your AWS account
   associate_public_ip_address = true
+  vpc_security_group_ids      = [aws_security_group.dev_instance_sg.id]
   tags = {
     Name        = "DevInstance"
     Owner       = "DevTeam"
@@ -52,10 +53,19 @@ resource "aws_instance" "dev_private_instance" {
   instance_type               = "t2.small"
   key_name                    = aws_key_pair.my_key_pair.key_name
   subnet_id                   = data.terraform_remote_state.network.outputs.private_subnet_ids[0] # Use the first private subnet ID
-  iam_instance_profile        = "SSM"                                                             # Ensure this profile exists in your AWS account
+  iam_instance_profile        = "SSM" # Ensure this profile exists in your AWS account
   associate_public_ip_address = false
+  vpc_security_group_ids      = [aws_security_group.dev_instance_sg.id]
+  user_data = <<-EOF
+              #!/bin/bash
+              yum update -y
+              yum install -y httpd
+              systemctl start httpd
+              systemctl enable httpd
+              echo "<h1>Welcome to the Dev Private Instance</h1>" > /var/www/html/index.html
+            EOF
   tags = {
-    Name        = "DevInstance"
+    Name        = "DevPrivateInstance"
     Owner       = "DevTeam"
     Environment = "Development"
     Project     = "TerraformDemo"
@@ -78,4 +88,38 @@ resource "local_file" "private_key_pem" {
   filename        = "${aws_key_pair.my_key_pair.key_name}.pem"
   content         = tls_private_key.private_key.private_key_pem
   file_permission = "0400"
+}
+
+resource "aws_security_group" "dev_instance_sg" {
+  name        = "dev_instance_sg"
+  description = "Security group for the development instance"
+  vpc_id      = data.terraform_remote_state.network.outputs.vpc_id
+
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = [var.aws_security_IP]
+  }
+
+  ingress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = [var.aws_security_IP]
+  }
+
+  ingress {
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = [var.aws_security_IP]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
 }
