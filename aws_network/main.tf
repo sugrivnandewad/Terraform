@@ -7,7 +7,7 @@ terraform {
   backend "s3" {
     bucket = "terraform-sbn"
     key    = dev / network / terraform.tfstate
-    region = var.aws_region
+    region = "ap-south-1"
 
   }
 }
