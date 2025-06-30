@@ -8,7 +8,7 @@ cat <<EOT > /var/www/html/index.html
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Welcome to the Dev Private Instance</title>
+  <title>Welcome to the Dev Private Instance 1</title>
   <style>
     body { background: #f0f4f8; font-family: Arial, sans-serif; color: #222; }
     .container { margin: 100px auto; width: 60%; background: #fff; border-radius: 10px; box-shadow: 0 0 20px #ccc; padding: 40px; text-align: center; }
