@@ -52,8 +52,8 @@ resource "aws_instance" "dev_private_instance" {
   ami                         = data.aws_ami.latest_amazon_linux.id
   instance_type               = "t2.small"
   key_name                    = aws_key_pair.my_key_pair.key_name
-  subnet_id                   = data.terraform_remote_state.network.outputs.private_subnet_ids[0] # Use the first private subnet ID
-  iam_instance_profile        = "SSM"                                                             # Ensure this profile exists in your AWS account
+  subnet_id                   = data.terraform_remote_state.network.outputs.private_subnet_ids[0]
+  iam_instance_profile        = "SSM"
   associate_public_ip_address = false
   vpc_security_group_ids      = [aws_security_group.dev_instance_sg.id]
   user_data                   = file("${path.module}/user_data.sh")
@@ -63,6 +63,12 @@ resource "aws_instance" "dev_private_instance" {
     Environment = "Development"
     Project     = "TerraformDemo"
     Role        = "WebServer"
+  }
+
+  lifecycle {
+    replace_triggered_by = [
+      filebase64sha256("${path.module}/user_data.sh")
+    ]
   }
 }
 
