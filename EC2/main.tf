@@ -56,14 +56,7 @@ resource "aws_instance" "dev_private_instance" {
   iam_instance_profile        = "SSM"                                                             # Ensure this profile exists in your AWS account
   associate_public_ip_address = false
   vpc_security_group_ids      = [aws_security_group.dev_instance_sg.id]
-  user_data                   = <<-EOF
-              #!/bin/bash
-              yum update -y
-              yum install -y httpd
-              systemctl start httpd
-              systemctl enable httpd
-              echo "<h1>Welcome to the Dev Private Instance</h1>" > /var/www/html/index.html
-            EOF
+  user_data                   = file("${path.module}/user_data.sh")
   tags = {
     Name        = "DevPrivateInstance"
     Owner       = "DevTeam"
