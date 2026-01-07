@@ -91,23 +91,14 @@ resource "aws_route_table_association" "dev_public_assoc" {
 }
 
 
-resource "aws_eip" "dev_eip" {
-  for_each = toset(data.aws_availability_zones.available.names)
-  domain   = "vpc"
-  tags = merge(
-    var.tags,
-    {
-      Name = "dev-eip-${each.key}"
-  })
-  lifecycle {
-    create_before_destroy = true // Ensure the EIP is recreated if the subnet changes
-  }
-}
 resource "aws_nat_gateway" "dev_ngw" {
-  for_each      = aws_subnet.dev_public_subnet
-  allocation_id = aws_eip.dev_eip[each.key].id
+  for_each = {
+    for k, v in aws_subnet.dev_public_subnet :
+    k => v if var.enable_nat_gateway && contains(keys(var.nat_gateway_allocation_ids), k)
+  }
+  allocation_id = var.nat_gateway_allocation_ids[each.key]
   subnet_id     = each.value.id
-  depends_on    = [aws_internet_gateway.dev_igw, aws_eip.dev_eip]
+  depends_on    = [aws_internet_gateway.dev_igw]
   tags = merge(
     var.tags,
     {
@@ -118,7 +109,6 @@ resource "aws_nat_gateway" "dev_ngw" {
     create_before_destroy = true
   }
 }
-
 resource "aws_route_table" "dev_private_rt" {
   for_each = aws_subnet.dev_private_subnet
   vpc_id   = aws_vpc.dev_vpc.id
@@ -131,11 +121,13 @@ resource "aws_route_table" "dev_private_rt" {
 }
 
 resource "aws_route" "dev_private_route" {
-  for_each               = aws_subnet.dev_private_subnet
+  for_each = {
+    for k, v in aws_subnet.dev_private_subnet :
+    k => v if contains(keys(aws_nat_gateway.dev_ngw), k)
+  }
   route_table_id         = aws_route_table.dev_private_rt[each.key].id
   destination_cidr_block = var.destination_cidr_block
-  // Use the NAT Gateway ID from the corresponding public subnet
-  nat_gateway_id = aws_nat_gateway.dev_ngw[each.key].id
+  nat_gateway_id         = aws_nat_gateway.dev_ngw[each.key].id
 }
 
 resource "aws_route_table_association" "dev_private_assoc" {

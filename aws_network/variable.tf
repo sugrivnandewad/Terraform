@@ -55,13 +55,13 @@ variable "enable_nat_gateway" {
   type        = bool
   default     = false
 }
-variable "nat_gateway_allocation_id" {
-  description = "EIP allocation ID for the NAT Gateway (required if enable_nat_gateway is true)"
-  type        = string
-  default     = ""
+variable "nat_gateway_allocation_ids" {
+  description = "Map of EIP allocation IDs for NAT Gateways per AZ (keyed by AZ name). Required if enable_nat_gateway is true."
+  type        = map(string)
+  default     = {}
   validation {
-    condition     = var.enable_nat_gateway ? var.nat_gateway_allocation_id != "" : true
-    error_message = "nat_gateway_allocation_id must be provided if enable_nat_gateway is true."
+    condition     = var.enable_nat_gateway ? length(keys(var.nat_gateway_allocation_ids)) > 0 : true
+    error_message = "nat_gateway_allocation_ids must be provided if enable_nat_gateway is true."
   }
 }
 
